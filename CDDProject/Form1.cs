@@ -1,18 +1,36 @@
 ﻿using System;
-using Python.Runtime;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace CDDProject
-
 {
+    public class MyCsvClassMap : ClassMap<MyDataModel>
+    {
+        public MyCsvClassMap()
+        {
+            Map(m => m.ID).Name("ID");
+            Map(m => m.Nombre).Name("Nombre del difunto");
+            Map(m => m.Fecha).Name("Fecha").TypeConverterOption.Format("dd-MM-yyyy");
+            Map(m => m.Bloque).Name("Bloque");
+            Map(m => m.Manzana).Name("Manzana");
+            Map(m => m.Lote).Name("Lote");
+        }
+    }
+
+    public class MyDataModel
+    {
+        public int ID { get; set; }
+        public string Nombre { get; set; }
+        public string Fecha { get; set; }
+        public string Bloque { get; set; }
+        public int Manzana { get; set; }
+        public string Lote { get; set; }
+    }
 
     public partial class mainprog : Form
     {
@@ -20,30 +38,42 @@ namespace CDDProject
         public mainprog()
         {
             InitializeComponent();
-            Runtime.PythonDLL = @"C:\Users\kapig\AppData\Local\Programs\Python\Python312\python312.dll";
+        }
+
+        static void ConvertToExcel(string inputFile, string outputFolder)
+        {
+            
+            List<MyDataModel> records = new List<MyDataModel>();
+
+            using (StreamReader reader = new StreamReader(inputFile))
+            using (CsvReader csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
+            {
+                records = csv.GetRecords<MyDataModel>().ToList();
+            }
+
+            string filename = Path.GetFileNameWithoutExtension(inputFile);
+            string outputFilePath = Path.Combine(outputFolder, $"{filename}.xlsx");
+
+            using (var writer = new StreamWriter(outputFilePath))
+            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            {
+                csv.Context.RegisterClassMap<MyCsvClassMap>();
+                csv.WriteRecords(records);
+            }
         }
 
         private void excelEvent(object sender, EventArgs e)
-        {
+        { 
             FolderBrowserDialog folderSaveDialog = new FolderBrowserDialog();
             folderSaveDialog.Description = "Selecciona dónde deseas guardar los archivos.";
 
             if (folderSaveDialog.ShowDialog() == DialogResult.OK)
             {
-                PythonEngine.Initialize();
-                dynamic pythonScript = Py.Import("testCDD");
-                using (Py.GIL())
+                foreach (string file in files)
                 {
-                    dynamic outputFolder = new PyString(folderSaveDialog.SelectedPath);
-
-                    foreach (string file in files)
-                    {
-                        dynamic inputFile = new PyString(file);
-                        dynamic result = pythonScript.InvokeMethod("convertToExcel", new PyObject[] { inputFile, outputFolder });
-                    }
-
-                    System.Windows.Forms.MessageBox.Show("¡Se han creado exitosamente los archivos!");
+                    ConvertToExcel(file, folderSaveDialog.SelectedPath);
                 }
+                System.Windows.Forms.MessageBox.Show("¡Se han creado exitosamente los archivos!");
             }
 
         }

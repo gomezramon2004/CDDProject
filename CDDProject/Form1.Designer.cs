@@ -84,7 +84,6 @@ namespace CDDProject
             this.Controls.Add(this.fileTxtb);
             this.Controls.Add(this.fileBtn);
             this.Controls.Add(this.excelBtn);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "mainprog";
             this.Text = "CDD";
             this.ResumeLayout(false);
