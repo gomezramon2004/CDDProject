@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.IO;
 using CsvHelper;
 using CsvHelper.Configuration;
+using OfficeOpenXml;
 
 namespace CDDProject
 {
@@ -13,7 +14,6 @@ namespace CDDProject
     {
         public MyCsvClassMap()
         {
-            Map(m => m.ID).Name("ID");
             Map(m => m.Nombre).Name("Nombre del difunto");
             Map(m => m.Fecha).Name("Fecha").TypeConverterOption.Format("dd-MM-yyyy");
             Map(m => m.Bloque).Name("Bloque");
@@ -24,7 +24,6 @@ namespace CDDProject
 
     public class MyDataModel
     {
-        public int ID { get; set; }
         public string Nombre { get; set; }
         public string Fecha { get; set; }
         public string Bloque { get; set; }
@@ -53,12 +52,13 @@ namespace CDDProject
 
             string filename = Path.GetFileNameWithoutExtension(inputFile);
             string outputFilePath = Path.Combine(outputFolder, $"{filename}.xlsx");
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using (var writer = new StreamWriter(outputFilePath))
-            using (var csv = new CsvWriter(writer, new CsvConfiguration(CultureInfo.InvariantCulture)))
+            using (var ExcelPkg = new ExcelPackage())
             {
-                csv.Context.RegisterClassMap<MyCsvClassMap>();
-                csv.WriteRecords(records);
+                ExcelWorksheet ExcelSheet = ExcelPkg.Workbook.Worksheets.Add("Registro de Tumbas");
+                ExcelSheet.Cells.LoadFromCollection(records, true);
+                ExcelPkg.SaveAs(new FileInfo(outputFilePath));
             }
         }
 
