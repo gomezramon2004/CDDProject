@@ -7,6 +7,7 @@ using System.IO;
 using CsvHelper;
 using CsvHelper.Configuration;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace CDDProject
 {
@@ -34,24 +35,27 @@ namespace CDDProject
     public partial class mainprog : Form
     {
         string[] files;
+        static string inputFolder;
         public mainprog()
         {
             InitializeComponent();
         }
 
-        static void ConvertToExcel(string inputFile, string outputFolder)
+        static void ConvertToExcel(string[] inputFiles, string outputFolder)
         {
             
             List<MyDataModel> records = new List<MyDataModel>();
 
-            using (StreamReader reader = new StreamReader(inputFile))
-            using (CsvReader csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
+            foreach (string inputFile in inputFiles)
             {
-                records = csv.GetRecords<MyDataModel>().ToList();
+                using (StreamReader reader = new StreamReader(inputFile))
+                using (CsvReader csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }))
+                {
+                    records.AddRange(csv.GetRecords<MyDataModel>().ToList());
+                }
             }
 
-            string filename = Path.GetFileNameWithoutExtension(inputFile);
-            string outputFilePath = Path.Combine(outputFolder, $"{filename}.xlsx");
+            string outputFilePath = Path.Combine(outputFolder, $"{inputFolder}.xlsx");
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using (var ExcelPkg = new ExcelPackage())
@@ -69,10 +73,7 @@ namespace CDDProject
 
             if (folderSaveDialog.ShowDialog() == DialogResult.OK)
             {
-                foreach (string file in files)
-                {
-                    ConvertToExcel(file, folderSaveDialog.SelectedPath);
-                }
+                ConvertToExcel(files, folderSaveDialog.SelectedPath);
                 System.Windows.Forms.MessageBox.Show("¡Se han creado exitosamente los archivos!");
             }
 
@@ -91,6 +92,7 @@ namespace CDDProject
                 } else
                 {
                     files = Directory.GetFiles(folderBrowserDialog.SelectedPath, "*.txt", SearchOption.AllDirectories);
+                    inputFolder = Path.GetFileName(dirPath);
                     fileTxtb.Text = dirPath;
                     excelBtn.Enabled = true;
                 }
