@@ -87,11 +87,11 @@ namespace CDDProject
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
             {
                 string dirPath = folderBrowserDialog.SelectedPath;
-                if (Directory.GetFiles(dirPath, "*.txt").Length == 0) {
+                files = Directory.GetFiles(dirPath, "*.txt", SearchOption.AllDirectories);
+                if (files.Length == 0) {
                     System.Windows.Forms.MessageBox.Show("No se encontraron archivos de texto dentro de la carpeta.");
                 } else
                 {
-                    files = Directory.GetFiles(folderBrowserDialog.SelectedPath, "*.txt", SearchOption.AllDirectories);
                     inputFolder = Path.GetFileName(dirPath);
                     fileTxtb.Text = dirPath;
                     excelBtn.Enabled = true;
